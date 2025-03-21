@@ -1,11 +1,11 @@
 import React from 'react';
 
 const logos = [
-  'https://via.placeholder.com/150?text=Marca+1',
-  'https://via.placeholder.com/150?text=Marca+2',
-  'https://via.placeholder.com/150?text=Marca+3',
-  'https://via.placeholder.com/150?text=Marca+4',
-  'https://via.placeholder.com/150?text=Marca+5',
+  'https://pngimg.com/d/car_logo_PNG1665.png',
+  'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b7/Mitsubishi-logo.png/1200px-Mitsubishi-logo.png',
+  'https://cdn.iconscout.com/icon/free/png-256/free-kia-logo-icon-download-in-svg-png-gif-file-formats--new-2021-motors-logos-icons-2641348.png',
+  'https://logos-world.net/wp-content/uploads/2021/03/Hyundai-Emblem.png',
+  'https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/BMW.svg/2048px-BMW.svg.png',
 ];
 
 const BrandsCarousel: React.FC = () => {

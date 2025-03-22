@@ -6,6 +6,7 @@ import Catalog from './pages/Catalog';
 import Contact from './pages/ContactUs';
 import Login from './pages/Login';
 import About from './pages/AboutUs';
+import Analytics from './pages/Analytics';
 import './App.css';
 
 const App: React.FC = () => {
@@ -19,6 +20,7 @@ const App: React.FC = () => {
         <Route path="/contact" element={<Contact />} />
         <Route path="/login" element={<Login />} />
         <Route path="/about" element={<About />} />
+        <Route path="/analytics" element={<Analytics />}/>
       </Routes>
       </div>
       <Footer />

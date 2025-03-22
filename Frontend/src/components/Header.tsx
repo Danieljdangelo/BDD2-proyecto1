@@ -21,6 +21,9 @@ const Header: React.FC = () => {
               <Link to="/catalog" className="hover:text-gray-300 text-lg md:text-xl">Catálogo</Link>
             </li>
             <li>
+              <Link to="/analytics" className="hover:text-gray-300 text-lg md:text-xl">Analíticas</Link>
+            </li>
+            <li>
               <Link to="/about" className="hover:text-gray-300 text-lg md:text-xl">Sobre Nosotros</Link>
             </li>
             <li>
@@ -69,6 +72,9 @@ const Header: React.FC = () => {
             </li>
             <li>
               <Link onClick={() => setIsOpen(false)} to="/catalog" className="block hover:text-gray-300 text-lg">Catálogo</Link>
+            </li>
+            <li>
+              <Link to="/catalog" className="hover:text-gray-300 text-lg md:text-xl">Analíticas</Link>
             </li>
             <li>
               <Link onClick={() => setIsOpen(false)} to="/about" className="block hover:text-gray-300 text-lg">Sobre Nosotros</Link>

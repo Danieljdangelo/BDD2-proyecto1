@@ -1,4 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+interface Car {
+  _id: string;
+  Brand: string;
+  Model: string;
+  Year: number;
+  Color: string;
+  Mileage: number;
+  Price: number;
+  Condition: string;
+}
 
 interface CatalogFilterProps {
   onFilter: (filters: { marca: string; modelo: string; año: string }) => void;
@@ -12,15 +22,43 @@ const CatalogFilterPanel: React.FC<CatalogFilterProps> = ({ onFilter }) => {
   });
 
   // Simulamos datos que vendrían de MongoDB
-  const brands = ["Toyota", "Honda", "Ford", "BMW", "Audi"];
-  const brandModels: { [key: string]: string[] } = {
-    Toyota: ["Corolla", "Camry", "Yaris"],
-    Honda: ["Civic", "Accord", "Fit"],
-    Ford: ["Fiesta", "Focus", "Mustang"],
-    BMW: ["3 Series", "5 Series", "X5"],
-    Audi: ["A3", "A4", "A6"]
-  };
-  const years = ["2023", "2022", "2021", "2020", "2019"];
+  const [cars, setCars] = useState<Car[]>([]); // Estado para almacenar los carros
+  const [brands, setBrands] = useState<string[]>([]); // Estado para almacenar las marcas
+  const [brandModels, setBrandModels] = useState<{ [key: string]: string[] }>({}); // Estado para almacenar los modelos por marca
+  const [years, setYears] = useState<string[]>([]); // Estado para almacenar los años
+
+  // Obtener los carros desde el backend al cargar el componente
+  useEffect(() => {
+    const fetchCars = async () => {
+      try {
+        const response = await fetch('http://localhost:3000/cars'); // Ruta del backend
+        const data: Car[] = await response.json();
+        setCars(data);
+
+        // Extraer marcas, modelos y años únicos
+        const uniqueBrands = [...new Set(data.map((car: Car) => car.Brand))];
+        const uniqueModelsByBrand: { [key: string]: string[] } = {};
+        const uniqueYears = [...new Set(data.map((car: Car) => car.Year.toString()))];
+
+        data.forEach((car: Car) => {
+          if (!uniqueModelsByBrand[car.Brand]) {
+            uniqueModelsByBrand[car.Brand] = [];
+          }
+          if (!uniqueModelsByBrand[car.Brand].includes(car.Model)) {
+            uniqueModelsByBrand[car.Brand].push(car.Model);
+          }
+        });
+
+        setBrands(uniqueBrands);
+        setBrandModels(uniqueModelsByBrand);
+        setYears(uniqueYears);
+      } catch (error) {
+        console.error('Error fetching cars:', error);
+      }
+    };
+
+    fetchCars();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;

@@ -1,5 +1,8 @@
 {
   "dependencies": {
     "react-router-dom": "^7.4.0"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^11.0.5"
   }
 }

@@ -1,9 +1,40 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import CarruselMarcas from '../components/CarruselMarcas';
 import ContactPromoCard from '../components/ContactPromoCard';
 import QuotePromoCard from '../components/QuotePromoCard';
 
+interface Car {
+  _id: string;
+  ID: number;
+  Brand: string;
+  Model: string;
+  Year: number;
+  Color: string;
+  Mileage: number;
+  Price: number;
+  Condition: string;
+}
+
 const Home: React.FC = () => {
+
+  const [featuredCars, setFeaturedCars] = useState<Car[]>([]);
+
+  // Función para obtener datos del backend
+  const fetchFeaturedCars = async () => {
+    try {
+      const response = await fetch('http://localhost:3000/cars/featured'); // Ruta del backend
+      const result = await response.json() as Car[];
+      setFeaturedCars(result);
+    } catch (error) {
+      console.error('Error fetching featured cars:', error);
+    }
+  };
+
+  // Ejecuta fetchFeaturedCars al cargar el componente
+  useEffect(() => {
+    fetchFeaturedCars();
+  }, []);
+
   return (
     <main id="home" className="mt-20">
       {/* Sección Hero inicial */}

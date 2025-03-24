@@ -4,7 +4,7 @@ import { Document } from 'mongoose';
 
 export type CarDocument = Car & Document;
 
-@Schema()
+@Schema({ collection: 'proyecto-BD2' })
 export class Car {
   @Prop({ required: true })
   Brand: string;

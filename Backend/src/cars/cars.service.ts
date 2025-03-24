@@ -9,6 +9,20 @@ import { FindCarQuery } from './dto/find-car.dto';
 export class CarsService {
   constructor(@InjectModel(Car.name) private carModel: Model<CarDocument>) {}
 
+  async getBrands(): Promise<string[]> {
+    return this.carModel.distinct('Brand').exec();
+  }
+
+  async getModels(brand: string): Promise<string[]> {
+    return this.carModel.distinct('Model', { Brand: brand }).exec();
+  }
+
+  async getYears(brand: string, model: string): Promise<number[]> {
+    return this.carModel
+      .distinct('Year', { Brand: brand, Model: model })
+      .exec();
+  }
+
   async create(createCarDto: Partial<Car>): Promise<Car> {
     const createdCar = new this.carModel(createCarDto);
     return createdCar.save();

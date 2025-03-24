@@ -17,4 +17,22 @@ export class CarsController {
   async findAll(@Query() query: FindCarQuery): Promise<Car[]> {
     return this.carsService.findAll(query);
   }
+
+  @Get('brands')
+  async getBrands(): Promise<string[]> {
+    return this.carsService.getBrands();
+  }
+
+  @Get('models')
+  async getModels(@Query('Brand') brand: string): Promise<string[]> {
+    return this.carsService.getModels(brand);
+  }
+
+  @Get('years')
+  async getYears(
+    @Query('Brand') brand: string,
+    @Query('Model') model: string,
+  ): Promise<number[]> {
+    return this.carsService.getYears(brand, model);
+  }
 }

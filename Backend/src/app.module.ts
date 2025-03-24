@@ -11,13 +11,13 @@ import { CarSchema } from './schemas/car.schema';
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
-        uri: configService.get<string>('MONGO_URI'), // Accede a MONGO_URI
+        uri: configService.get<string>('MONGO_URI'), // Access MONGO_URI
       }),
-      inject: [ConfigService], }),
-      MongooseModule.forFeature([{ name: 'Car', schema: CarSchema }]),
+      inject: [ConfigService],
+    }),
+    MongooseModule.forFeature([{ name: 'Car', schema: CarSchema }]), // Ensure this is correctly placed
   ],
   controllers: [AppController],
   providers: [AppService],
-  
 })
 export class AppModule {}

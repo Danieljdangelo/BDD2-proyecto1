@@ -1,82 +1,97 @@
-import React, { useState } from 'react';
+// src/components/CatalogFilterPanel.tsx
+import React from 'react';
 
 interface CatalogFilterProps {
-  onFilter: (filters: { marca: string; modelo: string; año: string }) => void;
+  onFilter: (filters: { Company: string; Model: string; Year: string }) => void;
+  companies: string[];
+  models: string[];
+  years: number[];
+  selectedCompany: string;
+  setSelectedCompany: (value: string) => void;
+  selectedModel: string;
+  setSelectedModel: (value: string) => void;
+  selectedYear: string;
+  setSelectedYear: (value: string) => void;
 }
 
-const CatalogFilterPanel: React.FC<CatalogFilterProps> = ({ onFilter }) => {
-  const [filters, setFilters] = useState({
-    marca: '',
-    modelo: '',
-    año: ''
-  });
-
-  // Simulamos datos que vendrían de MongoDB
-  const brands = ["Toyota", "Honda", "Ford", "BMW", "Audi"];
-  const brandModels: { [key: string]: string[] } = {
-    Toyota: ["Corolla", "Camry", "Yaris"],
-    Honda: ["Civic", "Accord", "Fit"],
-    Ford: ["Fiesta", "Focus", "Mustang"],
-    BMW: ["3 Series", "5 Series", "X5"],
-    Audi: ["A3", "A4", "A6"]
-  };
-  const years = ["2023", "2022", "2021", "2020", "2019"];
+const CatalogFilterPanel: React.FC<CatalogFilterProps> = ({
+  onFilter,
+  companies,
+  models,
+  years,
+  selectedCompany,
+  setSelectedCompany,
+  selectedModel,
+  setSelectedModel,
+  selectedYear,
+  setSelectedYear,
+}) => {
+  // Eliminamos el estado local de filtros, usamos directamente las props
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFilters(prev => ({
-      ...prev,
-      [name]: value,
-      ...(name === 'marca' ? { modelo: '' } : {}) // Al cambiar marca, reiniciamos modelo
-    }));
+    if (name === 'Company') {
+      setSelectedCompany(value);
+      setSelectedModel('');
+      setSelectedYear('');
+    } else if (name === 'Model') {
+      setSelectedModel(value);
+      setSelectedYear('');
+    } else if (name === 'Year') {
+      setSelectedYear(value);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onFilter(filters);
+    onFilter({
+      Company: selectedCompany,
+      Model: selectedModel,
+      Year: selectedYear,
+    });
   };
 
   return (
     <form onSubmit={handleSubmit} className="p-4 bg-gray-100 rounded-lg shadow-md">
       <div className="mb-4">
-        <label className="block font-semibold mb-1" htmlFor="marca">Marca</label>
+        <label className="block font-semibold mb-1" htmlFor="Company">Marca</label>
         <select 
-          id="marca" 
-          name="marca" 
-          value={filters.marca} 
+          id="Company" 
+          name="Company" 
+          value={selectedCompany} 
           onChange={handleChange}
           className="w-full border rounded px-3 py-2"
           required
         >
           <option value="">Selecciona una marca</option>
-          {brands.map((brand, idx) => (
-            <option key={idx} value={brand}>{brand}</option>
+          {companies.map((company, idx) => (
+            <option key={idx} value={company}>{company}</option>
           ))}
         </select>
       </div>
       <div className="mb-4">
-        <label className="block font-semibold mb-1" htmlFor="modelo">Modelo</label>
+        <label className="block font-semibold mb-1" htmlFor="Model">Modelo</label>
         <select 
-          id="modelo" 
-          name="modelo" 
-          value={filters.modelo} 
+          id="Model" 
+          name="Model" 
+          value={selectedModel} 
           onChange={handleChange}
           className="w-full border rounded px-3 py-2"
           required
-          disabled={!filters.marca}
+          disabled={!selectedCompany}
         >
           <option value="">Selecciona un modelo</option>
-          {filters.marca && brandModels[filters.marca]?.map((model, idx) => (
+          {models.map((model, idx) => (
             <option key={idx} value={model}>{model}</option>
           ))}
         </select>
       </div>
       <div className="mb-4">
-        <label className="block font-semibold mb-1" htmlFor="año">Año</label>
+        <label className="block font-semibold mb-1" htmlFor="Year">Año</label>
         <select 
-          id="año" 
-          name="año" 
-          value={filters.año} 
+          id="Year" 
+          name="Year" 
+          value={selectedYear} 
           onChange={handleChange}
           className="w-full border rounded px-3 py-2"
           required

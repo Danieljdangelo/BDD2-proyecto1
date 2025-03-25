@@ -24,15 +24,21 @@ export class CarsController {
   }
 
   @Get('models')
-  async getModels(@Query('Brand') brand: string): Promise<string[]> {
-    return this.carsService.getModels(brand);
+  async getModels(@Query('Company') company: string): Promise<string[]> {
+    return this.carsService.getModels(company);
+  }
+
+  @Get('dealers')
+  async getDealers(@Query('regions') regions: string) {
+    const regionArray = regions ? regions.split(',') : [];
+    return this.carsService.getDealersByRegions(regionArray);
   }
 
   @Get('years')
   async getYears(
-    @Query('Brand') brand: string,
+    @Query('Company') company: string,
     @Query('Model') model: string,
   ): Promise<number[]> {
-    return this.carsService.getYears(brand, model);
+    return this.carsService.getYears(company, model);
   }
 }

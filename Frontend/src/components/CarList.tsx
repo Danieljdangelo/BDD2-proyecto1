@@ -1,11 +1,24 @@
+// src/components/CarList.tsx
 import React from 'react';
 
-interface Car {
+export interface Car {
   _id: string;
-  marca: string;
-  modelo: string;
-  año: number;
-  // Otros campos que consideres necesarios
+  Car_id: string;
+  Date: string;
+  "Customer Name": string;
+  Gender: string;
+  "Annual Income": number;
+  Dealer_Name: string;
+  Company: string;
+  Model: string;
+  Engine: string;
+  Transmission: string;
+  Color: string;
+  "Price ($)": number;
+  Dealer_No: string;
+  "Body Style": string;
+  Phone: number;
+  Dealer_Region: string;
 }
 
 interface CarListProps {
@@ -13,20 +26,38 @@ interface CarListProps {
 }
 
 const CarList: React.FC<CarListProps> = ({ cars }) => {
+  if (cars.length === 0) return null;
+
   return (
-    <div className="mt-4">
-      <h3 className="text-xl font-bold mb-2">Resultados:</h3>
-      {cars.length === 0 ? (
-        <p>No se encontraron carros.</p>
-      ) : (
-        <ul className="space-y-2">
+    <div className="overflow-x-auto mt-4">
+      <table className="min-w-full border-collapse">
+        <thead>
+          <tr>
+            <th className="border p-2">Marca</th>
+            <th className="border p-2">Modelo</th>
+            <th className="border p-2">Transmisión</th>
+            <th className="border p-2">Tipo de Motor</th>
+            <th className="border p-2">Precio</th>
+            <th className="border p-2">Dealer</th>
+            <th className="border p-2">Región</th>
+            <th className="border p-2">Teléfono</th>
+          </tr>
+        </thead>
+        <tbody>
           {cars.map(car => (
-            <li key={car._id} className="border rounded p-2 shadow-sm">
-              {car.marca} {car.modelo} - {car.año}
-            </li>
+            <tr key={car._id}>
+              <td className="border p-2">{car.Company}</td>
+              <td className="border p-2">{car.Model}</td>
+              <td className="border p-2">{car.Transmission}</td>
+              <td className="border p-2">{car.Engine}</td>
+              <td className="border p-2">${car["Price ($)"]}</td>
+              <td className="border p-2">{car.Dealer_Name}</td>
+              <td className="border p-2">{car.Dealer_Region}</td>
+              <td className="border p-2">{car.Phone}</td>
+            </tr>
           ))}
-        </ul>
-      )}
+        </tbody>
+      </table>
     </div>
   );
 };

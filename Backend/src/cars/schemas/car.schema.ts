@@ -7,25 +7,29 @@ export type CarDocument = Car & Document;
 @Schema({ collection: 'proyecto-BD2' })
 export class Car {
   @Prop({ required: true })
-  Brand: string;
+  Car_id: string;
+
+  @Prop({ required: true })
+  Date: Date;
+
+  @Prop({ required: true })
+  Company: string; // Representa la marca
 
   @Prop({ required: true })
   Model: string;
 
   @Prop({ required: true })
-  Year: number;
-
-  @Prop({ required: true })
   Color: string;
-
-  @Prop({ required: true })
-  Mileage: number;
 
   @Prop({ required: true })
   Price: number;
 
+  // Agrega los campos para los dealers:
   @Prop({ required: true })
-  Condition: string;
+  Dealer_Name: string;
+
+  @Prop({ required: true })
+  Dealer_Region: string;
 }
 
 export const CarSchema = SchemaFactory.createForClass(Car);

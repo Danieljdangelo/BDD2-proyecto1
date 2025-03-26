@@ -1,16 +1,22 @@
+// src/components/QueryDisplay.tsx
 import React from 'react';
 
 interface QueryDisplayProps {
-  query: object;
+  sqlQuery: string;
+  mongoQuery: string;
 }
 
-const QueryDisplay: React.FC<QueryDisplayProps> = ({ query }) => {
+const QueryDisplay: React.FC<QueryDisplayProps> = ({ sqlQuery, mongoQuery }) => {
   return (
-    <div className="bg-gray-200 p-4 rounded-md my-4">
-      <h3 className="text-lg font-semibold mb-2">Consulta:</h3>
-      <pre className="text-sm">{JSON.stringify(query, null, 2)}</pre>
+    <div className="bg-gray-100 p-4 rounded-lg shadow-md">
+      <h4 className="text-xl font-bold mb-4 text-black">Consulta SQL</h4> {/* Agregado text-black */}
+      <pre className="bg-gray-800 text-white p-4 rounded-lg mb-6">{sqlQuery}</pre>
+
+      <h4 className="text-xl font-bold mb-4 text-black">Consulta MongoDB</h4> {/* Agregado text-black */}
+      <pre className="bg-gray-800 text-white p-4 rounded-lg">{mongoQuery}</pre>
     </div>
   );
 };
 
 export default QueryDisplay;
+

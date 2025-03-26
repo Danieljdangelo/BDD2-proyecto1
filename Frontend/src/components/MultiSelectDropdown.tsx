@@ -36,7 +36,7 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({ options, sele
   return (
     <div className="relative inline-block w-full" ref={dropdownRef}>
       <div 
-        className="border rounded px-3 py-2 cursor-pointer"
+        className="border rounded px-3 py-2 cursor-pointer bg-white text-black"
         onClick={() => setIsOpen(!isOpen)}
       >
         {selected.length > 0 ? selected.join(', ') : placeholder}
@@ -44,14 +44,14 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({ options, sele
       {isOpen && (
         <div className="absolute z-10 mt-1 w-full bg-white border rounded shadow-lg max-h-60 overflow-y-auto">
           {options.map(option => (
-            <label key={option} className="flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer">
+            <label key={option} className="flex items-center px-3 py-2 bg-white text-black hover:bg-gray-200">
               <input
                 type="checkbox"
-                className="mr-2"
+                className="mr-2 accent-black"
                 checked={selected.includes(option)}
                 onChange={() => toggleOption(option)}
               />
-              <span>{option}</span>
+              <span className="text-black">{option}</span>
             </label>
           ))}
         </div>

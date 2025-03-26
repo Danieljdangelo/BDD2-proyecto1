@@ -12,6 +12,11 @@ export class AnalyticsController {
     return await this.analyticsService.getBestSellingByRegion();
   }
 
+  @Get('brands-total-sum')
+  async getBrandsTotalSum(@Query() query: { region?: string; brand?: string }) {
+    return this.analyticsService.getBrandsTotalSum(query);
+  }
+
   @Get('vehicles-by-price')
   getVehiclesByPrice(
     @Query()

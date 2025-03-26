@@ -81,4 +81,26 @@ export class AnalyticsService {
       ])
       .exec();
   }
+
+  async getBrandsTotalSum(query: {
+    region?: string;
+    brand?: string;
+  }): Promise<any[]> {
+    const { region, brand } = query;
+    const match: any = {};
+    if (region) {
+      match.Dealer_Region = region;
+    }
+    if (brand) {
+      match.Company = brand;
+    }
+    const result = await this.carModel
+      .aggregate([
+        { $match: match },
+        { $group: { _id: '$Company', total: { $sum: '$Price' } } },
+        { $sort: { total: -1 } },
+      ])
+      .exec();
+    return result;
+  }
 }

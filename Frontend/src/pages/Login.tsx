@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { firebaseapp } from '../firebase/config';
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile} from 'firebase/auth';
 
 const Login: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
@@ -19,31 +21,46 @@ const Login: React.FC = () => {
     e.preventDefault();
     setError('');
     setLoading(true);
+    const auth = getAuth(firebaseapp);
+
     try {
-      const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          email: loginEmail,
-          password: loginPassword
-        })
-      });
-      if (!response.ok) {
-        const data = await response.json();
-        setError(data.message || 'Error al iniciar sesión');
-      } else {
-        const data = await response.json();
-        // Almacena el token y redirige
-        localStorage.setItem('token', data.token);
-        window.location.href = '/';
-      }
+      const userCredential = await signInWithEmailAndPassword(auth, loginEmail, loginPassword);
+      console.log("User signed in:", userCredential.user);
+      const token = await userCredential.user.getIdToken()
+      // Almacena el token y redirige
+      localStorage.setItem('token', token);
+      window.location.href = '/';
     } catch (error) {
-      setError('Error de red, inténtalo de nuevo.');
+      setError('Error al iniciar sesión');
+      throw error;
     } finally {
       setLoading(false);
     }
+    // try {
+    //   const response = await fetch('/api/login', {
+    //     method: 'POST',
+    //     headers: {
+    //       'Content-Type': 'application/json'
+    //     },
+    //     body: JSON.stringify({
+    //       email: loginEmail,
+    //       password: loginPassword
+    //     })
+    //   });
+    //   if (!response.ok) {
+    //     const data = await response.json();
+    //     setError(data.message || 'Error al iniciar sesión');
+    //   } else {
+    //     const data = await response.json();
+    //     // Almacena el token y redirige
+    //     localStorage.setItem('token', data.token);
+    //     window.location.href = '/';
+    //   }
+    // } catch (error) {
+    //   setError('Error de red, inténtalo de nuevo.');
+    // } finally {
+    //   setLoading(false);
+    // }
   };
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -54,31 +71,47 @@ const Login: React.FC = () => {
       return;
     }
     setLoading(true);
+    const auth = getAuth(firebaseapp);
     try {
-      const response = await fetch('/api/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          name: registerName,
-          email: registerEmail,
-          password: registerPassword
-        })
-      });
-      if (!response.ok) {
-        const data = await response.json();
-        setError(data.message || 'Error al registrarse');
-      } else {
-        const data = await response.json();
-        localStorage.setItem('token', data.token);
-        window.location.href = '/';
-      }
+      const userCredential = await createUserWithEmailAndPassword(auth, registerEmail, registerPassword);
+      await updateProfile(userCredential.user, { displayName: registerName });
+      console.log("User registered:", userCredential.user);
+      const token = await userCredential.user.getIdToken()
+      // Almacena el token y redirige
+      localStorage.setItem('token', token);
+      window.location.href = '/';
     } catch (error) {
-      setError('Error de red, inténtalo de nuevo.');
+      setError('Error al registrar usuario');
+      throw error;
     } finally {
       setLoading(false);
     }
+
+    // try {
+    //   const response = await fetch('/api/register', {
+    //     method: 'POST',
+    //     headers: {
+    //       'Content-Type': 'application/json'
+    //     },
+    //     body: JSON.stringify({
+    //       name: registerName,
+    //       email: registerEmail,
+    //       password: registerPassword
+    //     })
+    //   });
+    //   if (!response.ok) {
+    //     const data = await response.json();
+    //     setError(data.message || 'Error al registrarse');
+    //   } else {
+    //     const data = await response.json();
+    //     localStorage.setItem('token', data.token);
+    //     window.location.href = '/';
+    //   }
+    // } catch (error) {
+    //   setError('Error de red, inténtalo de nuevo.');
+    // } finally {
+    //   setLoading(false);
+    // }
   };
 
   return (

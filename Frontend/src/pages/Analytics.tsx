@@ -2,34 +2,22 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState, useMemo } from 'react';
 import BestSellingCarsChart from '../components/Charts/BestSellingCarsChart';
-import MonthlySalesChart from '../components/Charts/MonthlySalesChart';
 import TopBrandsChart from '../components/Charts/TopBrandsChart';
 import MultiSelectDropdown from '../components/MultiSelectDropdown';
-import { ChartData } from 'chart.js';
-import Slider from 'rc-slider';
-import 'rc-slider/assets/index.css';
 import QueryDisplay from '../components/QueryDisplay';
-
+import { ChartData } from 'chart.js';
 
 const Analytics: React.FC = () => {
-  // Estados para el gráfico best-selling (ventas por marca y región)
   const [rawBestSelling, setRawBestSelling] = useState<any[]>([]);
   const [bestSellingData, setBestSellingData] = useState<ChartData<'bar'> | null>(null);
   const [selectedRegions, setSelectedRegions] = useState<string[]>([]);
+  const [selectedRegionsForBrand, setSelectedRegionsForBrand] = useState<string[]>([]);
+  const [selectedBrand, setSelectedBrand] = useState<string>(''); 
+  const [brandsTotalSumData, setBrandsTotalSumData] = useState<ChartData<'pie'> | null>(null);
+  const [brands, setBrands] = useState<string[]>([]);
 
-  // Estados para el gráfico vehicles-by-price (vehículos por rango de precio)
-  const [monthlySalesData, setMonthlySalesData] = useState<ChartData<'line'> | null>(null);
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 50000]);
-  const [minPrice, setMinPrice] = useState<number>(0);
-  const [maxPrice, setMaxPrice] = useState<number>(50000);
-  const [selectedRegionForPrice, setSelectedRegionForPrice] = useState<string>('');
-  const [selectedDealership, setSelectedDealership] = useState<string>('');
-  const [dealers, setDealers] = useState<string[]>([]);
-  const [selectedDealers, setSelectedDealers] = useState<string[]>([]);
-  const [topBrandsData, setTopBrandsData] = useState<ChartData<'pie'> | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Interfaz para tipar la data del endpoint best-selling
   interface BestSellingItem {
     _id: {
       Company: string;
@@ -38,82 +26,6 @@ const Analytics: React.FC = () => {
     count: number;
   }
 
-
-  const queryForBestSelling = useMemo(() => {
-    const selectedRegionsText = selectedRegions.length > 0 ? selectedRegions.join(', ') : 'Todas';
-  
-    // Consulta SQL
-    const sqlQuery = `
-      SELECT Company, Dealer_Region, COUNT(*) as total_sales
-      FROM vehicle_sales
-      WHERE Dealer_Region IN (${selectedRegionsText})
-      GROUP BY Company, Dealer_Region
-      ORDER BY total_sales DESC;
-    `;
-  
-    // Consulta MongoDB
-    const mongoQuery = `
-      db.vehicle_sales.aggregate([
-        {
-          $match: {
-            Dealer_Region: { $in: [${selectedRegionsText}] }
-          }
-        },
-        {
-          $group: {
-            _id: { Company: "$Company", Dealer_Region: "$Dealer_Region" },
-            total_sales: { $sum: 1 }
-          }
-        },
-        {
-          $sort: { total_sales: -1 }
-        }
-      ]);
-    `;
-  
-    return {
-      sqlQuery,
-      mongoQuery,
-    };
-  }, [selectedRegions]);
-
-/*
-  const queryVehiclesByPrice = useMemo(() => {
-    return {
-      sqlQuery: `
-        SELECT price_range, COUNT(*) AS vehicle_count
-        FROM vehicles
-        WHERE price BETWEEN ${priceRange[0]} AND ${priceRange[1]}
-        AND region IN (${selectedRegionForPrice.join(', ')})
-        AND dealership IN (${selectedDealers.join(', ')})
-        GROUP BY price_range
-        ORDER BY vehicle_count DESC;
-      `,
-      mongoQuery: `
-        db.vehicles.aggregate([
-          {
-            $match: {
-              price: { $gte: ${priceRange[0]}, $lte: ${priceRange[1]} },
-              region: { $in: ${JSON.stringify(selectedRegionForPrice)} },
-              dealership: { $in: ${JSON.stringify(selectedDealers)} }
-            }
-          },
-          {
-            $group: {
-              _id: { price_range: "$price_range" },
-              vehicle_count: { $sum: 1 }
-            }
-          },
-          {
-            $sort: { vehicle_count: -1 }
-          }
-        ]);
-      `
-    };
-  }, [priceRange, selectedRegionForPrice, selectedDealers]);
-*/
-
-  // useMemo para obtener todas las regiones disponibles a partir de rawBestSelling
   const allRegionsForSelect = useMemo(() => {
     if (!rawBestSelling || rawBestSelling.length === 0) return [];
     const regionTotals: Record<string, number> = {};
@@ -126,38 +38,29 @@ const Analytics: React.FC = () => {
     return Object.keys(regionTotals).sort((a, b) => regionTotals[b] - regionTotals[a]);
   }, [rawBestSelling]);
 
-  // UseEffect para hacer fetch del endpoint best-selling
   useEffect(() => {
-    const fetchAnalytics = async () => {
+    const fetchBestSelling = async () => {
       try {
-        const [bestSellingRes] = await Promise.all([
-          fetch('http://localhost:5000/analytics/best-selling'),
-          // Otros endpoints se pueden agregar cuando estén listos
-        ]);
-        if (!bestSellingRes.ok) {
-          throw new Error('Error en la respuesta del backend para best-selling');
-        }
-        const bestSellingFetched = await bestSellingRes.json();
-        console.log('Respuesta del endpoint best-selling:', bestSellingFetched);
-        setRawBestSelling(bestSellingFetched);
+        const res = await fetch('http://localhost:5000/analytics/best-selling');
+        if (!res.ok) throw new Error('Error en la respuesta del backend para best-selling');
+        const data = await res.json();
+        console.log('Respuesta del endpoint best-selling:', data);
+        setRawBestSelling(data);
       } catch (error) {
-        console.error('Error fetching analytics data:', error);
+        console.error('Error fetching best-selling data:', error);
         setRawBestSelling([]);
       } finally {
         setLoading(false);
       }
     };
-
-    fetchAnalytics();
+    fetchBestSelling();
   }, []);
 
-  // UseEffect para transformar la data de best-selling usando el filtro de regiones
   useEffect(() => {
     if (!rawBestSelling || rawBestSelling.length === 0) {
       setBestSellingData(null);
       return;
     }
-    // Si no se ha seleccionado ninguna región o se seleccionó "all", usamos todas las regiones disponibles
     let finalRegions: string[] = [];
     if (selectedRegions.length === 0 || selectedRegions.includes("all")) {
       const regionTotals: Record<string, number> = {};
@@ -171,18 +74,13 @@ const Analytics: React.FC = () => {
     } else {
       finalRegions = selectedRegions;
     }
-    // Obtener todas las marcas únicas
     const companiesSet = new Set<string>();
     rawBestSelling.forEach((item: BestSellingItem) => {
       if (item._id.Company) companiesSet.add(item._id.Company);
     });
     const companies = Array.from(companiesSet);
-
-    // Definir colores para cada marca
     const colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#AA66CC', '#66AA00'];
     const colorForIndex = (idx: number): string => colors[idx % colors.length];
-
-    // Construir datasets para cada marca
     const datasets = companies.map((company) => {
       const data = finalRegions.map((region) => {
         const found = rawBestSelling.find((item: BestSellingItem) =>
@@ -196,71 +94,61 @@ const Analytics: React.FC = () => {
         backgroundColor: colorForIndex(companies.indexOf(company)),
       };
     });
-
     const newChartData: ChartData<'bar'> = {
       labels: finalRegions,
       datasets,
     };
-
     console.log('Datos transformados para ventas por marca y región:', newChartData);
     setBestSellingData(newChartData);
   }, [rawBestSelling, selectedRegions]);
 
-  // UseEffect para el gráfico de vehículos por rango de precio
+  // UseEffect para obtener la lista de marcas (para el filtro del gráfico de Total de Ventas)
   useEffect(() => {
-    const fetchVehiclesByPrice = async () => {
-      try {
-        const params = new URLSearchParams({
-          minPrice: priceRange[0].toString(),
-          maxPrice: priceRange[1].toString(),
-          region: selectedRegionForPrice, // Si usas selección múltiple, conviertele a cadena separada por comas
-          dealership: selectedDealers.join(','),      // Si usas selección múltiple para dealerships
-        });
-        const res = await fetch(`http://localhost:5000/analytics/vehicles-by-price?${params.toString()}`);
-        if (!res.ok) throw new Error('Error fetching vehicles by price');
-        const data = await res.json();
-        console.log('Respuesta de vehicles-by-price:', data);
-        // Se espera que data tenga la forma: [{ _id: "0-10000", count: 20 }, ...]
-        const labels = data.map((item: any) => item._id);
-        const counts = data.map((item: any) => item.count);
-        const chartData: ChartData<'line'> = {
-          labels,
-          datasets: [{
-            label: 'Cantidad de vehículos',
-            data: counts,
-            borderColor: '#36A2EB',
-            backgroundColor: 'rgba(255, 85, 0, 0.96)',
-            fill: true,
-          }],
-        };
-        setMonthlySalesData(chartData);
-      } catch (error) {
-        console.error('Error fetching vehicles by price:', error);
-        setMonthlySalesData(null);
-      }
-    };
-  
-    fetchVehiclesByPrice();
-  }, [priceRange, selectedRegionForPrice, selectedDealers]);
-  
-  useEffect(() => {
-    if (selectedRegionForPrice.length === 0) {
-      setDealers([]);
-      setSelectedDealers([]);
-      return;
-    }
-    // Convierte el arreglo de regiones a una cadena separada por comas
-    const regionsParam = selectedRegionForPrice.join(',');
-    fetch(`http://localhost:5000/cars/dealers?regions=${encodeURIComponent(regionsParam)}`)
+    fetch('http://localhost:5000/cars/brands')
       .then(res => res.json())
       .then(data => {
-        console.log('Dealers recibidos:', data);
-        setDealers(data);
-        setSelectedDealers([]); // Reinicia la selección de dealers si es necesario
+        console.log('Marcas recibidas:', data);
+        setBrands(data);
       })
-      .catch(err => console.error('Error fetching dealers:', err));
-  }, [selectedRegionForPrice]);
-  
+      .catch(err => console.error('Error fetching brands:', err));
+  }, []);
+
+  // UseEffect para obtener los datos del endpoint de Total de Ventas por Marca (Precio Acumulado)
+  useEffect(() => {
+    const fetchBrandsTotalSum = async () => {
+      try {
+        const params = new URLSearchParams();
+        if (selectedRegionsForBrand.length > 0) {
+          params.append('region', selectedRegionsForBrand.join(','));
+        }
+        if (selectedBrand) {
+          params.append('brand', selectedBrand);
+        }
+        const res = await fetch(`http://localhost:5000/analytics/brands-total-sum?${params.toString()}`);
+        if (!res.ok) throw new Error('Error fetching brands total sum');
+        const data = await res.json();
+        console.log('Respuesta de brands-total-sum:', data);
+        const labels = data.map((item: any) => item._id);
+        const totals = data.map((item: any) => item.total);
+        const chartData: ChartData<'pie'> = {
+          labels,
+          datasets: [{
+            label: 'Total de ventas',
+            data: totals,
+            backgroundColor: labels.map((_, idx) => {
+              const colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#AA66CC', '#66AA00'];
+              return colors[idx % colors.length];
+            }),
+          }],
+        };
+        setBrandsTotalSumData(chartData);
+      } catch (error) {
+        console.error('Error fetching brands total sum:', error);
+        setBrandsTotalSumData(null);
+      }
+    };
+    fetchBrandsTotalSum();
+  }, [selectedRegionsForBrand, selectedBrand]);
 
   if (loading) return <p>Cargando analíticas...</p>;
 
@@ -268,115 +156,104 @@ const Analytics: React.FC = () => {
     <div className="max-w-7xl mx-auto p-4 mt-20">
       <h1 className="text-4xl font-bold mb-8">Analíticas</h1>
 
-      {/* Sección: Ventas por Marca y Región */}
+      {/* Sección 1: Ventas por Marca y Región */}
       <section className="mb-12">
-  <div className="flex justify-between items-center mb-4">
-    <h3 className="text-xl font-bold">Ventas por Marca y Región</h3>
-    <div className="w-64">
-      <MultiSelectDropdown 
-        options={allRegionsForSelect}
-        selected={selectedRegions}
-        onChange={setSelectedRegions}
-        placeholder="Selecciona regiones"
-      />
-    </div>
-  </div>
-  {bestSellingData ? (
-    <>
-      <BestSellingCarsChart
-        data={bestSellingData}
-        options={{
-          responsive: true,
-          plugins: {
-            legend: { position: 'top' },
-            title: { display: true, text: 'Ventas por Marca y Región' },
-          },
-        }}
-      />
-      <QueryDisplay sqlQuery={queryForBestSelling.sqlQuery}
-        mongoQuery={queryForBestSelling.mongoQuery} />
-    </>
-  ) : (
-    <p>No hay datos para mostrar.</p>
-  )}
-</section>
-
-      {/* Sección: Vehículos por Rango de Precio */}
-      <section className="mb-12">
-  <h3 className="text-xl font-bold mb-4">Vehículos por Rango de Precio</h3>
-  <div className="mb-4 flex flex-col md:flex-row gap-4 items-center">
-    {/* Filtro de precio con slider */}
-    <div className="flex-1">
-      <label className="block font-semibold mb-1">Rango de Precio:</label>
-      <Slider
-        range
-        min={0}
-        max={100000}
-        value={priceRange}
-        onChange={(value: [number, number]) => setPriceRange(value)}
-        trackStyle={[{ backgroundColor: '#36A2EB' }]}
-        handleStyle={[{ borderColor: '#36A2EB' }, { borderColor: '#36A2EB' }]}
-      />
-      <div className="flex justify-between text-sm mt-1">
-        <span>${priceRange[0]}</span>
-        <span>${priceRange[1]}</span>
-      </div>
-    </div>
-    {/* Filtro de región */}
-    <div className="w-64">
-      <label className="block font-semibold mb-1">Región:</label>
-      <MultiSelectDropdown
-        options={allRegionsForSelect}
-        selected={selectedRegionForPrice}
-        onChange={setSelectedRegionForPrice}
-        placeholder="Selecciona región(es)"
-        
-      />
-    </div>
-    {/* Filtro de dealership */}
-    <div className="w-64">
-      <label className="block font-semibold mb-1">Dealership:</label>
-      <MultiSelectDropdown
-        options={dealers}
-        selected={selectedDealers}
-        onChange={setSelectedDealers}
-        placeholder="Selecciona dealership(s)"
-      />
-    </div>
-  </div>
-  {monthlySalesData ? (
-  <MonthlySalesChart
-    data={monthlySalesData}
-    options={{
-      responsive: true,
-      plugins: {
-        legend: { position: 'top' },
-        title: { display: true, text: 'Vehículos por Rango de Precio' },
-      },
-    }}
-  />
-) : (
-  <p>No hay datos.</p>
-)}
-</section>
-
-
-      {/* Sección: Top Marcas */}
-      <section className="mb-12">
-        <h3 className="text-xl font-bold mb-4">Marca con mayor cantidad de carros</h3>
-        {topBrandsData ? (
-          <TopBrandsChart
-            data={topBrandsData}
-            options={{
-              responsive: true,
-              plugins: {
-                legend: { position: 'top' },
-                title: { display: true, text: 'Top marcas' },
-              },
-            }}
-          />
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-xl font-bold">Ventas por Marca y Región</h3>
+          <div className="w-64">
+            <MultiSelectDropdown 
+              options={allRegionsForSelect}
+              selected={selectedRegions}
+              onChange={setSelectedRegions}
+              placeholder="Selecciona regiones"
+            />
+          </div>
+        </div>
+        {bestSellingData ? (
+          <>
+            <BestSellingCarsChart
+              data={bestSellingData}
+              options={{
+                responsive: true,
+                plugins: {
+                  legend: { position: 'top' },
+                  title: { display: true, text: 'Ventas por Marca y Región' },
+                },
+              }}
+            />
+            <QueryDisplay 
+              sqlQuery={`SELECT Company, Dealer_Region, COUNT(*) as total_sales
+                          FROM vehicle_sales
+                          WHERE Dealer_Region IN (${selectedRegions.length > 0 ? selectedRegions.join(', ') : 'Todas'})
+                          GROUP BY Company, Dealer_Region
+                          ORDER BY total_sales DESC;`}
+              mongoQuery={`db.vehicle_sales.aggregate([
+                          { $match: { Dealer_Region: { $in: [${selectedRegions.length > 0 ? selectedRegions.join(', ') : 'Todas'}] } } },
+                          { $group: { _id: { Company: "$Company", Dealer_Region: "$Dealer_Region" }, total_sales: { $sum: 1 } } },
+                          { $sort: { total_sales: -1 } }
+                          ]);`}
+            />
+          </>
         ) : (
-          <p>No hay datos.</p>
+          <p>No hay datos para mostrar.</p>
+        )}
+      </section>
+
+      {/* Sección 2: Total de Ventas por Marca (Precio Acumulado) - Gráfico de Torta */}
+      <section className="mb-12">
+        <h3 className="text-xl font-bold mb-4">Total de Ventas por Marca (Precio Acumulado)</h3>
+        <div className="mb-4 flex flex-col md:flex-row gap-4 items-center">
+          {/* Filtro de región (selección múltiple) */}
+          <div className="w-64">
+            <label htmlFor="regionBrand" className="block font-semibold mb-1">Región:</label>
+            <MultiSelectDropdown 
+              options={allRegionsForSelect}
+              selected={selectedRegionsForBrand}
+              onChange={setSelectedRegionsForBrand}
+              placeholder="Selecciona región(es)"
+            />
+          </div>
+          {/* Filtro de marca (select simple) */}
+          <div className="w-64">
+            <label htmlFor="brandFilter" className="block font-semibold mb-1">Marca:</label>
+            <select 
+              id="brandFilter" 
+              value={selectedBrand}
+              onChange={(e) => setSelectedBrand(e.target.value)}
+              className="border rounded px-2 py-1 w-full"
+            >
+              <option value="">Todas</option>
+              {brands.map(brand => (
+                <option key={brand} value={brand}>{brand}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+        {brandsTotalSumData ? (
+          <>
+            <TopBrandsChart
+              data={brandsTotalSumData}
+              options={{
+                responsive: true,
+                plugins: {
+                  legend: { position: 'top' },
+                  title: { display: true, text: 'Total de Ventas por Marca' },
+                },
+              }}
+            />
+            <QueryDisplay 
+              sqlQuery={`SELECT Company, SUM(Price) as total FROM Cars
+WHERE ${selectedRegionsForBrand.length > 0 ? `Dealer_Region IN (${selectedRegionsForBrand.join(', ')})` : '1=1'}
+${selectedBrand ? `AND Company = '${selectedBrand}'` : ''}
+GROUP BY Company;`}
+              mongoQuery={`db.proyecto-BD2.aggregate([
+  { $match: { ${selectedRegionsForBrand.length > 0 ? `Dealer_Region: { $in: ${JSON.stringify(selectedRegionsForBrand)} }` : '{}' }${selectedBrand ? `, Company: "${selectedBrand}"` : ''} } },
+  { $group: { _id: "$Company", total: { $sum: "$Price" } } }
+]);`}
+            />
+          </>
+        ) : (
+          <p>No hay datos para mostrar.</p>
         )}
       </section>
     </div>

@@ -8,6 +8,8 @@ import MultiSelectDropdown from '../components/MultiSelectDropdown';
 import { ChartData } from 'chart.js';
 import Slider from 'rc-slider';
 import 'rc-slider/assets/index.css';
+import QueryDisplay from '../components/QueryDisplay';
+
 
 const Analytics: React.FC = () => {
   // Estados para el gráfico best-selling (ventas por marca y región)
@@ -35,6 +37,81 @@ const Analytics: React.FC = () => {
     };
     count: number;
   }
+
+
+  const queryForBestSelling = useMemo(() => {
+    const selectedRegionsText = selectedRegions.length > 0 ? selectedRegions.join(', ') : 'Todas';
+  
+    // Consulta SQL
+    const sqlQuery = `
+      SELECT Company, Dealer_Region, COUNT(*) as total_sales
+      FROM vehicle_sales
+      WHERE Dealer_Region IN (${selectedRegionsText})
+      GROUP BY Company, Dealer_Region
+      ORDER BY total_sales DESC;
+    `;
+  
+    // Consulta MongoDB
+    const mongoQuery = `
+      db.vehicle_sales.aggregate([
+        {
+          $match: {
+            Dealer_Region: { $in: [${selectedRegionsText}] }
+          }
+        },
+        {
+          $group: {
+            _id: { Company: "$Company", Dealer_Region: "$Dealer_Region" },
+            total_sales: { $sum: 1 }
+          }
+        },
+        {
+          $sort: { total_sales: -1 }
+        }
+      ]);
+    `;
+  
+    return {
+      sqlQuery,
+      mongoQuery,
+    };
+  }, [selectedRegions]);
+
+/*
+  const queryVehiclesByPrice = useMemo(() => {
+    return {
+      sqlQuery: `
+        SELECT price_range, COUNT(*) AS vehicle_count
+        FROM vehicles
+        WHERE price BETWEEN ${priceRange[0]} AND ${priceRange[1]}
+        AND region IN (${selectedRegionForPrice.join(', ')})
+        AND dealership IN (${selectedDealers.join(', ')})
+        GROUP BY price_range
+        ORDER BY vehicle_count DESC;
+      `,
+      mongoQuery: `
+        db.vehicles.aggregate([
+          {
+            $match: {
+              price: { $gte: ${priceRange[0]}, $lte: ${priceRange[1]} },
+              region: { $in: ${JSON.stringify(selectedRegionForPrice)} },
+              dealership: { $in: ${JSON.stringify(selectedDealers)} }
+            }
+          },
+          {
+            $group: {
+              _id: { price_range: "$price_range" },
+              vehicle_count: { $sum: 1 }
+            }
+          },
+          {
+            $sort: { vehicle_count: -1 }
+          }
+        ]);
+      `
+    };
+  }, [priceRange, selectedRegionForPrice, selectedDealers]);
+*/
 
   // useMemo para obtener todas las regiones disponibles a partir de rawBestSelling
   const allRegionsForSelect = useMemo(() => {
@@ -136,7 +213,7 @@ const Analytics: React.FC = () => {
         const params = new URLSearchParams({
           minPrice: priceRange[0].toString(),
           maxPrice: priceRange[1].toString(),
-          region: selectedRegionForPrice.join(','), // Si usas selección múltiple, conviertele a cadena separada por comas
+          region: selectedRegionForPrice, // Si usas selección múltiple, conviertele a cadena separada por comas
           dealership: selectedDealers.join(','),      // Si usas selección múltiple para dealerships
         });
         const res = await fetch(`http://localhost:5000/analytics/vehicles-by-price?${params.toString()}`);
@@ -152,7 +229,7 @@ const Analytics: React.FC = () => {
             label: 'Cantidad de vehículos',
             data: counts,
             borderColor: '#36A2EB',
-            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+            backgroundColor: 'rgba(255, 85, 0, 0.96)',
             fill: true,
           }],
         };
@@ -193,32 +270,36 @@ const Analytics: React.FC = () => {
 
       {/* Sección: Ventas por Marca y Región */}
       <section className="mb-12">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-bold">Ventas por Marca y Región</h3>
-          <div className="w-64">
-            <MultiSelectDropdown 
-              options={allRegionsForSelect}
-              selected={selectedRegions}
-              onChange={setSelectedRegions}
-              placeholder="Selecciona regiones"
-            />
-          </div>
-        </div>
-        {bestSellingData ? (
-          <BestSellingCarsChart
-            data={bestSellingData}
-            options={{
-              responsive: true,
-              plugins: {
-                legend: { position: 'top' },
-                title: { display: true, text: 'Ventas por Marca y Región' },
-              },
-            }}
-          />
-        ) : (
-          <p>No hay datos para mostrar.</p>
-        )}
-      </section>
+  <div className="flex justify-between items-center mb-4">
+    <h3 className="text-xl font-bold">Ventas por Marca y Región</h3>
+    <div className="w-64">
+      <MultiSelectDropdown 
+        options={allRegionsForSelect}
+        selected={selectedRegions}
+        onChange={setSelectedRegions}
+        placeholder="Selecciona regiones"
+      />
+    </div>
+  </div>
+  {bestSellingData ? (
+    <>
+      <BestSellingCarsChart
+        data={bestSellingData}
+        options={{
+          responsive: true,
+          plugins: {
+            legend: { position: 'top' },
+            title: { display: true, text: 'Ventas por Marca y Región' },
+          },
+        }}
+      />
+      <QueryDisplay sqlQuery={queryForBestSelling.sqlQuery}
+        mongoQuery={queryForBestSelling.mongoQuery} />
+    </>
+  ) : (
+    <p>No hay datos para mostrar.</p>
+  )}
+</section>
 
       {/* Sección: Vehículos por Rango de Precio */}
       <section className="mb-12">
@@ -249,6 +330,7 @@ const Analytics: React.FC = () => {
         selected={selectedRegionForPrice}
         onChange={setSelectedRegionForPrice}
         placeholder="Selecciona región(es)"
+        
       />
     </div>
     {/* Filtro de dealership */}
